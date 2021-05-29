@@ -2,12 +2,16 @@
 
 ## Spartos tyrimas ##
 
+Naudojami `int` tipo kintamieji. Įrašomi naudojant `push_back`.
+
 Container | 10000 | 100000 | 1000000 | 10000000 | 100000000
 ------------ | -------------| -------------| -------------| -------------| -------------
 *std::vector* | 0 ms | 1 ms | 15 ms | 140 ms | 1492 ms 
 *Vector* | 0 ms | 1 ms | 16 ms | 194 ms | 1874 ms
 
 ## Atminties perskirstymai ##
+
+Naudojami `int` tipo kintamieji. Įrašomi naudojant `push_back`.
 
 Container | 10000 | 100000 | 1000000 | 10000000 | 100000000
 ------------ | -------------| -------------| -------------| -------------| -------------
