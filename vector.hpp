@@ -3,6 +3,8 @@
 
 #include<iterator>
 #include<memory>
+#include<iostream>
+#include<utility>
 
 using namespace std;
 
@@ -17,10 +19,9 @@ public:
     //Konstruktoriai
     Vector() {create();}
     explicit Vector (size_type n, const T &t = T{}) {create(n, t);}
-    Vector (const Vector &v) { create(v.begin(), v.end());}
+    Vector (const Vector &v) {create(v.begin(), v.end());}
 
     //Operatoriai
-
     Vector &operator=(const Vector &v)
     {
         if (&v == this) return *this;
@@ -45,6 +46,11 @@ public:
     size_type size() const noexcept {return avail - itt;}
 
     size_type capacity() const {return limit - itt;}
+
+    bool empty()const noexcept
+    {
+        return size() == 0;
+    }
 
     //Iteratoriai
     iterator begin(){return itt;}
@@ -96,21 +102,20 @@ public:
     ~Vector(){uncreate();}
 
     void reserve(size_type);
-    iterator erase(iterator, iterator);
     void push_back(const T&);
     void pop_back();
     void clear();
     void shrink_to_fit();
     void resize(size_type n, value_type data = T());
-    void erase(const_iterator);
-    void erase(const_iterator,const_iterator);
+    void erase(iterator);
+    void erase(iterator, iterator);
     void assign(size_type type, const value_type& val){
         uncreate();
         itt = alloc.allocate(type);
         limit = avail - itt + size;
         uninitialized_fill(itt, limit, val);
     }
-    void assign(const_iterator i, const_iterator j){
+    void assign(iterator i, iterator j){
         uncreate();
         create(i, j);
     }
@@ -127,7 +132,8 @@ void create(const_iterator, const_iterator);
 void uncreate();
 void grow();
 void unchecked_append(const T &);
-
+template <class InputIterator>
+void assign(InputIterator, InputIterator);
 };
 
 template <class T>
@@ -166,7 +172,8 @@ void Vector<T>::uncreate()
 template <class T>
 void Vector<T>::grow()
 {
-    size_type new_size = max(2*(limit - itt), ptrdiff_t(1));
+    size_type capacity_limit = 1;
+    size_type new_size = max(2* capacity(), capacity_limit);
     iterator new_data = alloc.allocate(new_size);
     iterator new_avail = uninitialized_copy(itt, avail, new_data);
 
@@ -188,12 +195,7 @@ void Vector<T>::reserve(size_type new_size)
 {
     if (new_size > capacity())
     {
-        iterator new_itt = alloc.allocate(new_size);
-        iterator new_avail = uninitialized_copy(itt, avail, new_itt);
-        uncreate();
-        itt = new_itt;
-        avail = new_avail;
-        limit = itt + new_size;
+        grow(new_size);
     }
 }
 
@@ -204,14 +206,21 @@ void Vector<T>::push_back(const T& val)
     unchecked_append(val);
 }
 
+// template <class T>
+// void Vector<T>::clear()
+// {
+//     iterator new_itt = alloc.allocate(capacity());
+//     size_type size = capacity();
+//     uncreate();
+//     limit = new_itt + size;
+//     itt = avail = new_itt;
+// }
+
 template <class T>
 void Vector<T>::clear()
 {
-    iterator new_itt = alloc.allocate(capacity());
-    size_type size = capacity();
-    uncreate();
-    limit = new_itt + size;
-    itt = avail = new_itt;
+    itt = avail = limit = nullptr;
+    resize(0);
 }
 
 template <class T>
@@ -254,7 +263,7 @@ void Vector<T>::resize(size_type n, value_type data)
 }
 
 template <class T>
-void Vector<T>::erase(Vector <T>::const_iterator position)
+void Vector<T>::erase(Vector <T>::iterator position)
 {
     iterator new_avail = move(position + 1, avail, position);
     alloc.destroy(new_avail);
@@ -262,7 +271,7 @@ void Vector<T>::erase(Vector <T>::const_iterator position)
 }
 
 template <class T>
-void Vector<T>::erase(Vector <T>::const_iterator first,const_iterator last)
+void Vector<T>::erase(Vector <T>::iterator first, iterator last)
 {
     iterator new_avail = move(last, avail, first);
     avail = new_avail;
